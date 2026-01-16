@@ -11,15 +11,13 @@ RUN echo "extension=pdo_sqlite.so" > /usr/local/etc/php/conf.d/docker-php-ext-pd
 # Download and unzip the SQLite plugin
 ADD https://downloads.wordpress.org/plugin/sqlite-database-integration.zip /tmp/
 RUN apt-get install -y unzip \
-    && mkdir -p /tmp/sqlite-plugin \
-    && unzip /tmp/sqlite-database-integration.zip -d /tmp/sqlite-plugin/ \
-    && mkdir -p /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration \
-    && cp -r /tmp/sqlite-plugin/sqlite-database-integration/* /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/ \
-    && rm /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/deactivate.php \
-    && cp /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/load.php /usr/src/wordpress/wp-content/mu-plugins/0-sqlite-database-integration.php \
-    && cp /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/db.copy /usr/src/wordpress/wp-content/db.php \
+    && unzip /tmp/sqlite-database-integration.zip -d /tmp/ \
+    && mkdir -p /usr/src/wordpress/wp-content/mu-plugins \
+    && cp -r /tmp/sqlite-database-integration/* /usr/src/wordpress/wp-content/mu-plugins/ \
+    && mv /usr/src/wordpress/wp-content/mu-plugins/deactivate.php /usr/src/wordpress/wp-content/mu-plugins/deactivate.php.disabled \
+    && cp /usr/src/wordpress/wp-content/mu-plugins/db.copy /usr/src/wordpress/wp-content/db.php \
     && chmod 644 /usr/src/wordpress/wp-content/db.php \
-    && rm -rf /tmp/sqlite-plugin /tmp/sqlite-database-integration.zip
+    && rm -rf /tmp/sqlite-database-integration /tmp/sqlite-database-integration.zip
 
 # Copy your theme files into the WordPress themes directory
 COPY . /usr/src/wordpress/wp-content/themes/my-assembler-theme/

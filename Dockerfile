@@ -12,10 +12,11 @@ RUN apt-get install -y unzip \
     && mv /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/* /usr/src/wordpress/wp-content/mu-plugins/ \
     && rm -rf /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/
 
-# NEW: Copy the db.php file to the wp-content directory to enable SQLite
-RUN cp /usr/src/wordpress/wp-content/mu-plugins/db.copy /usr/src/wordpress/wp-content/wp-content/db.php
+# FIX: Create the directory if it doesn't exist and copy the SQLite drop-in to the correct location
+RUN mkdir -p /usr/src/wordpress/wp-content && \
+    cp /usr/src/wordpress/wp-content/mu-plugins/db.copy /usr/src/wordpress/wp-content/db.php
 
-# Copy your theme files (Ensure this is on one line)
+# Copy your theme files into the WordPress themes directory
 COPY . /usr/src/wordpress/wp-content/themes/my-assembler-theme/
 
 WORKDIR /var/www/html

@@ -11,14 +11,13 @@ RUN echo "extension=pdo_sqlite.so" > /usr/local/etc/php/conf.d/docker-php-ext-pd
 # Download and unzip the SQLite plugin
 ADD https://downloads.wordpress.org/plugin/sqlite-database-integration.zip /tmp/
 RUN apt-get install -y unzip \
-    && unzip /tmp/sqlite-database-integration.zip -d /usr/src/wordpress/wp-content/mu-plugins/ \
-    && mv /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/* /usr/src/wordpress/wp-content/mu-plugins/ \
-    && rm -rf /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/ /tmp/sqlite-database-integration.zip
-
-# Create the directory if it doesn't exist and copy the SQLite drop-in to the correct location
-RUN mkdir -p /usr/src/wordpress/wp-content && \
-    cp /usr/src/wordpress/wp-content/mu-plugins/db.copy /usr/src/wordpress/wp-content/db.php && \
-    chmod 644 /usr/src/wordpress/wp-content/db.php
+    && mkdir -p /tmp/sqlite-plugin \
+    && unzip /tmp/sqlite-database-integration.zip -d /tmp/sqlite-plugin/ \
+    && mkdir -p /usr/src/wordpress/wp-content/mu-plugins \
+    && cp /tmp/sqlite-plugin/sqlite-database-integration/load.php /usr/src/wordpress/wp-content/mu-plugins/0-sqlite-database-integration.php \
+    && cp /tmp/sqlite-plugin/sqlite-database-integration/db.copy /usr/src/wordpress/wp-content/db.php \
+    && chmod 644 /usr/src/wordpress/wp-content/db.php \
+    && rm -rf /tmp/sqlite-plugin /tmp/sqlite-database-integration.zip
 
 # Copy your theme files into the WordPress themes directory
 COPY . /usr/src/wordpress/wp-content/themes/my-assembler-theme/

@@ -1,12 +1,13 @@
 # Use the official PHP + Apache WordPress image
-FROM wordpress:latest
+FROM wordpress:6.4
 
 # Install SQLite support and ensure PHP extension is properly loaded
 RUN apt-get update && apt-get install -y libsqlite3-dev sqlite3 \
-    && docker-php-ext-install pdo_sqlite
+    && docker-php-ext-install pdo pdo_sqlite \
+    && docker-php-ext-enable pdo pdo_sqlite
 
-# Ensure SQLite extension is enabled
-RUN echo "extension=pdo_sqlite.so" > /usr/local/etc/php/conf.d/docker-php-ext-pdo_sqlite.ini
+# Verify SQLite extension is loaded
+RUN php -m | grep -i pdo_sqlite || (echo "ERROR: SQLite extension not loaded" && exit 1)
 
 # Download and unzip the SQLite plugin
 ADD https://downloads.wordpress.org/plugin/sqlite-database-integration.zip /tmp/
@@ -24,6 +25,12 @@ RUN apt-get install -y unzip \
 
 # Copy your theme files into the WordPress themes directory
 COPY . /usr/src/wordpress/wp-content/themes/my-assembler-theme/
+
+# Create database directory and set permissions BEFORE wp-config
+RUN mkdir -p /var/www/html/wp-content && \
+    mkdir -p /var/www/html/wp-content/uploads && \
+    mkdir -p /var/www/html/wp-content/plugins && \
+    mkdir -p /var/www/html/wp-content/mu-plugins
 
 # Create a minimal wp-config.php to trigger SQLite initialization
 RUN echo '<?php\n\
@@ -49,12 +56,13 @@ if ( ! defined( "ABSPATH" ) ) {\n\
     define( "ABSPATH", __DIR__ . "/" );\n\
 }\n\
 require_once ABSPATH . "wp-settings.php";\n\
-?>' > /usr/src/wordpress/wp-config.php \
-    && chmod 644 /usr/src/wordpress/wp-config.php
+?>' > /var/www/html/wp-config.php \
+    && chmod 644 /var/www/html/wp-config.php
 
-# Set proper permissions for WordPress directories (must be done after theme copy)
-RUN chown -R www-data:www-data /usr/src/wordpress/wp-content \
-    && chmod -R 775 /usr/src/wordpress/wp-content \
-    && chmod 644 /usr/src/wordpress/wp-content/db.php
+# Set proper permissions for WordPress directories
+RUN chown -R www-data:www-data /var/www/html/wp-content \
+    && chmod -R 775 /var/www/html/wp-content \
+    && chmod 644 /var/www/html/wp-content/db.php \
+    && chown www-data:www-data /var/www/html/wp-config.php
 
 WORKDIR /var/www/html

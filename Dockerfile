@@ -5,7 +5,7 @@ FROM nginx:alpine
 COPY . /usr/share/nginx/html/
 
 # Copy nginx config
-RUN echo 'server {\n\
+RUN echo -e 'server {\n\
     listen 80 default_server;\n\
     listen [::]:80 default_server;\n\
     server_name _;\n\

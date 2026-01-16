@@ -3,11 +3,12 @@ FROM wordpress:6.4
 
 # Install SQLite support and ensure PHP extension is properly loaded
 RUN apt-get update && apt-get install -y libsqlite3-dev sqlite3 \
-    && docker-php-ext-install pdo pdo_sqlite \
-    && docker-php-ext-enable pdo pdo_sqlite
+    && docker-php-ext-install pdo \
+    && docker-php-ext-configure pdo_sqlite --with-pdo-sqlite \
+    && docker-php-ext-install pdo_sqlite
 
 # Verify SQLite extension is loaded
-RUN php -m | grep -i pdo_sqlite || (echo "ERROR: SQLite extension not loaded" && exit 1)
+RUN php -m | grep pdo_sqlite
 
 # Download and unzip the SQLite plugin
 ADD https://downloads.wordpress.org/plugin/sqlite-database-integration.zip /tmp/

@@ -27,12 +27,10 @@ RUN apt-get install -y unzip \
 COPY . /usr/src/wordpress/wp-content/themes/my-assembler-theme/
 
 # Create database directory and set permissions BEFORE wp-config
-RUN mkdir -p /var/www/html/wp-content && \
-    mkdir -p /var/www/html/wp-content/uploads && \
-    mkdir -p /var/www/html/wp-content/plugins && \
-    mkdir -p /var/www/html/wp-content/mu-plugins
+RUN mkdir -p /usr/src/wordpress/wp-content/uploads && \
+    mkdir -p /usr/src/wordpress/wp-content/plugins
 
-# Create a minimal wp-config.php to trigger SQLite initialization
+# Create a minimal wp-config.php 
 RUN echo '<?php\n\
 define( "DB_NAME", "wordpress" );\n\
 define( "DB_USER", "wordpress" );\n\
@@ -56,13 +54,11 @@ if ( ! defined( "ABSPATH" ) ) {\n\
     define( "ABSPATH", __DIR__ . "/" );\n\
 }\n\
 require_once ABSPATH . "wp-settings.php";\n\
-?>' > /var/www/html/wp-config.php \
-    && chmod 644 /var/www/html/wp-config.php
+?>' > /usr/src/wordpress/wp-config.php \
+    && chmod 644 /usr/src/wordpress/wp-config.php
 
-# Set proper permissions for WordPress directories
-RUN chown -R www-data:www-data /var/www/html/wp-content \
-    && chmod -R 775 /var/www/html/wp-content \
-    && chmod 644 /var/www/html/wp-content/db.php \
-    && chown www-data:www-data /var/www/html/wp-config.php
+# Set proper permissions for WordPress directories at build time
+RUN chmod -R 755 /usr/src/wordpress/wp-content && \
+    chmod 644 /usr/src/wordpress/wp-content/db.php
 
 WORKDIR /var/www/html

@@ -61,4 +61,28 @@ require_once ABSPATH . "wp-settings.php";\n\
 RUN chmod -R 755 /usr/src/wordpress/wp-content && \
     chmod 644 /usr/src/wordpress/wp-content/db.php
 
-WORKDIR /var/www/html
+# Create a startup script to ensure SQLite files are in place at runtime
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+# Copy SQLite files to runtime location if they dont exist\n\
+if [ ! -f /var/www/html/wp-content/db.php ]; then\n\
+    echo "Initializing SQLite database files..."\n\
+    cp -r /usr/src/wordpress/wp-content/mu-plugins /var/www/html/wp-content/ 2>/dev/null || true\n\
+    cp /usr/src/wordpress/wp-content/db.php /var/www/html/wp-content/db.php\n\
+    chmod 755 /var/www/html/wp-content\n\
+    chmod 755 /var/www/html/wp-content/mu-plugins\n\
+    chmod 644 /var/www/html/wp-content/db.php\n\
+    chown -R www-data:www-data /var/www/html/wp-content\n\
+fi\n\
+\n\
+# Ensure mu-plugins loader exists\n\
+if [ ! -f /var/www/html/wp-content/mu-plugins/0-sqlite-database-integration-loader.php ]; then\n\
+    cp /usr/src/wordpress/wp-content/mu-plugins/0-sqlite-database-integration-loader.php /var/www/html/wp-content/mu-plugins/\n\
+fi\n\
+\n\
+exec "$@"\n\
+' > /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Use the startup script
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

@@ -17,6 +17,8 @@ RUN apt-get install -y unzip \
     && cp /usr/src/wordpress/wp-content/mu-plugins/load.php /usr/src/wordpress/wp-content/mu-plugins/0-sqlite-database-integration-loader.php \
     && rm /usr/src/wordpress/wp-content/mu-plugins/load.php \
     && cp /usr/src/wordpress/wp-content/mu-plugins/db.copy /usr/src/wordpress/wp-content/db.php \
+    && chmod 755 /usr/src/wordpress/wp-content \
+    && chmod 755 /usr/src/wordpress/wp-content/mu-plugins \
     && chmod 644 /usr/src/wordpress/wp-content/db.php \
     && rm -rf /tmp/sqlite-database-integration /tmp/sqlite-database-integration.zip
 
@@ -40,7 +42,9 @@ define( "SECURE_AUTH_SALT", "put your unique phrase here" );\n\
 define( "LOGGED_IN_SALT", "put your unique phrase here" );\n\
 define( "NONCE_SALT", "put your unique phrase here" );\n\
 $table_prefix = "wp_";\n\
-define( "WP_DEBUG", false );\n\
+define( "WP_DEBUG", true );\n\
+define( "WP_DEBUG_LOG", "/var/www/html/wp-content/debug.log" );\n\
+define( "WP_DEBUG_DISPLAY", false );\n\
 if ( ! defined( "ABSPATH" ) ) {\n\
     define( "ABSPATH", __DIR__ . "/" );\n\
 }\n\
@@ -48,9 +52,9 @@ require_once ABSPATH . "wp-settings.php";\n\
 ?>' > /usr/src/wordpress/wp-config.php \
     && chmod 644 /usr/src/wordpress/wp-config.php
 
-# Set proper permissions for WordPress directories
+# Set proper permissions for WordPress directories (must be done after theme copy)
 RUN chown -R www-data:www-data /usr/src/wordpress/wp-content \
-    && chmod -R 755 /usr/src/wordpress/wp-content \
-    && chmod -R 755 /usr/src/wordpress/wp-content/mu-plugins
+    && chmod -R 775 /usr/src/wordpress/wp-content \
+    && chmod 644 /usr/src/wordpress/wp-content/db.php
 
 WORKDIR /var/www/html

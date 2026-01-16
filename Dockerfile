@@ -13,9 +13,11 @@ ADD https://downloads.wordpress.org/plugin/sqlite-database-integration.zip /tmp/
 RUN apt-get install -y unzip \
     && mkdir -p /tmp/sqlite-plugin \
     && unzip /tmp/sqlite-database-integration.zip -d /tmp/sqlite-plugin/ \
-    && mkdir -p /usr/src/wordpress/wp-content/mu-plugins \
-    && cp /tmp/sqlite-plugin/sqlite-database-integration/load.php /usr/src/wordpress/wp-content/mu-plugins/0-sqlite-database-integration.php \
-    && cp /tmp/sqlite-plugin/sqlite-database-integration/db.copy /usr/src/wordpress/wp-content/db.php \
+    && mkdir -p /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration \
+    && cp -r /tmp/sqlite-plugin/sqlite-database-integration/* /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/ \
+    && rm /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/deactivate.php \
+    && cp /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/load.php /usr/src/wordpress/wp-content/mu-plugins/0-sqlite-database-integration.php \
+    && cp /usr/src/wordpress/wp-content/mu-plugins/sqlite-database-integration/db.copy /usr/src/wordpress/wp-content/db.php \
     && chmod 644 /usr/src/wordpress/wp-content/db.php \
     && rm -rf /tmp/sqlite-plugin /tmp/sqlite-database-integration.zip
 

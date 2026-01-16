@@ -48,4 +48,9 @@ require_once ABSPATH . "wp-settings.php";\n\
 ?>' > /usr/src/wordpress/wp-config.php \
     && chmod 644 /usr/src/wordpress/wp-config.php
 
+# Set proper permissions for WordPress directories
+RUN chown -R www-data:www-data /usr/src/wordpress/wp-content \
+    && chmod -R 755 /usr/src/wordpress/wp-content \
+    && chmod -R 755 /usr/src/wordpress/wp-content/mu-plugins
+
 WORKDIR /var/www/html

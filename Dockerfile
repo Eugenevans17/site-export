@@ -23,4 +23,29 @@ RUN apt-get install -y unzip \
 # Copy your theme files into the WordPress themes directory
 COPY . /usr/src/wordpress/wp-content/themes/my-assembler-theme/
 
+# Create a minimal wp-config.php to trigger SQLite initialization
+RUN echo '<?php\n\
+define( "DB_NAME", "wordpress" );\n\
+define( "DB_USER", "wordpress" );\n\
+define( "DB_PASSWORD", "wordpress" );\n\
+define( "DB_HOST", "localhost" );\n\
+define( "DB_CHARSET", "utf8mb4" );\n\
+define( "DB_COLLATE", "" );\n\
+define( "AUTH_KEY", "put your unique phrase here" );\n\
+define( "SECURE_AUTH_KEY", "put your unique phrase here" );\n\
+define( "LOGGED_IN_KEY", "put your unique phrase here" );\n\
+define( "NONCE_KEY", "put your unique phrase here" );\n\
+define( "AUTH_SALT", "put your unique phrase here" );\n\
+define( "SECURE_AUTH_SALT", "put your unique phrase here" );\n\
+define( "LOGGED_IN_SALT", "put your unique phrase here" );\n\
+define( "NONCE_SALT", "put your unique phrase here" );\n\
+$table_prefix = "wp_";\n\
+define( "WP_DEBUG", false );\n\
+if ( ! defined( "ABSPATH" ) ) {\n\
+    define( "ABSPATH", __DIR__ . "/" );\n\
+}\n\
+require_once ABSPATH . "wp-settings.php";\n\
+?>' > /usr/src/wordpress/wp-config.php \
+    && chmod 644 /usr/src/wordpress/wp-config.php
+
 WORKDIR /var/www/html

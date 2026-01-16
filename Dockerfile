@@ -1,89 +1,21 @@
-# Use the official PHP + Apache WordPress image
-FROM wordpress:6.4
+# Use a lightweight nginx image to serve static files
+FROM nginx:alpine
 
-# Install SQLite support and ensure PHP extension is properly loaded
-RUN apt-get update && apt-get install -y libsqlite3-dev sqlite3 \
-    && docker-php-ext-install pdo \
-    && docker-php-ext-configure pdo_sqlite --with-pdo-sqlite \
-    && docker-php-ext-install pdo_sqlite
+# Copy all files to nginx default location
+COPY . /usr/share/nginx/html/
 
-# Verify SQLite extension is loaded
-RUN php -m | grep pdo_sqlite
+# Copy nginx config
+RUN echo 'server {\n\
+    listen 80 default_server;\n\
+    listen [::]:80 default_server;\n\
+    server_name _;\n\
+    root /usr/share/nginx/html;\n\
+    index index.html home.html;\n\
+    location / {\n\
+        try_files $uri $uri/ /index.html;\n\
+    }\n\
+}' > /etc/nginx/conf.d/default.conf
 
-# Download and unzip the SQLite plugin
-ADD https://downloads.wordpress.org/plugin/sqlite-database-integration.zip /tmp/
-RUN apt-get install -y unzip \
-    && unzip /tmp/sqlite-database-integration.zip -d /tmp/ \
-    && mkdir -p /usr/src/wordpress/wp-content/mu-plugins \
-    && cp -r /tmp/sqlite-database-integration/* /usr/src/wordpress/wp-content/mu-plugins/ \
-    && cp /usr/src/wordpress/wp-content/mu-plugins/load.php /usr/src/wordpress/wp-content/mu-plugins/0-sqlite-database-integration-loader.php \
-    && rm /usr/src/wordpress/wp-content/mu-plugins/load.php \
-    && cp /usr/src/wordpress/wp-content/mu-plugins/db.copy /usr/src/wordpress/wp-content/db.php \
-    && chmod 755 /usr/src/wordpress/wp-content \
-    && chmod 755 /usr/src/wordpress/wp-content/mu-plugins \
-    && chmod 644 /usr/src/wordpress/wp-content/db.php \
-    && rm -rf /tmp/sqlite-database-integration /tmp/sqlite-database-integration.zip
+EXPOSE 80
 
-# Copy your theme files into the WordPress themes directory
-COPY . /usr/src/wordpress/wp-content/themes/my-assembler-theme/
-
-# Create database directory and set permissions BEFORE wp-config
-RUN mkdir -p /usr/src/wordpress/wp-content/uploads && \
-    mkdir -p /usr/src/wordpress/wp-content/plugins
-
-# Create a minimal wp-config.php 
-RUN echo '<?php\n\
-define( "DB_NAME", "wordpress" );\n\
-define( "DB_USER", "wordpress" );\n\
-define( "DB_PASSWORD", "wordpress" );\n\
-define( "DB_HOST", "localhost" );\n\
-define( "DB_CHARSET", "utf8mb4" );\n\
-define( "DB_COLLATE", "" );\n\
-define( "AUTH_KEY", "put your unique phrase here" );\n\
-define( "SECURE_AUTH_KEY", "put your unique phrase here" );\n\
-define( "LOGGED_IN_KEY", "put your unique phrase here" );\n\
-define( "NONCE_KEY", "put your unique phrase here" );\n\
-define( "AUTH_SALT", "put your unique phrase here" );\n\
-define( "SECURE_AUTH_SALT", "put your unique phrase here" );\n\
-define( "LOGGED_IN_SALT", "put your unique phrase here" );\n\
-define( "NONCE_SALT", "put your unique phrase here" );\n\
-$table_prefix = "wp_";\n\
-define( "WP_DEBUG", true );\n\
-define( "WP_DEBUG_LOG", "/var/www/html/wp-content/debug.log" );\n\
-define( "WP_DEBUG_DISPLAY", false );\n\
-if ( ! defined( "ABSPATH" ) ) {\n\
-    define( "ABSPATH", __DIR__ . "/" );\n\
-}\n\
-require_once ABSPATH . "wp-settings.php";\n\
-?>' > /usr/src/wordpress/wp-config.php \
-    && chmod 644 /usr/src/wordpress/wp-config.php
-
-# Set proper permissions for WordPress directories at build time
-RUN chmod -R 755 /usr/src/wordpress/wp-content && \
-    chmod 644 /usr/src/wordpress/wp-content/db.php
-
-# Create a startup script to ensure SQLite files are in place at runtime
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-# Copy SQLite files to runtime location if they dont exist\n\
-if [ ! -f /var/www/html/wp-content/db.php ]; then\n\
-    echo "Initializing SQLite database files..."\n\
-    cp -r /usr/src/wordpress/wp-content/mu-plugins /var/www/html/wp-content/ 2>/dev/null || true\n\
-    cp /usr/src/wordpress/wp-content/db.php /var/www/html/wp-content/db.php\n\
-    chmod 755 /var/www/html/wp-content\n\
-    chmod 755 /var/www/html/wp-content/mu-plugins\n\
-    chmod 644 /var/www/html/wp-content/db.php\n\
-    chown -R www-data:www-data /var/www/html/wp-content\n\
-fi\n\
-\n\
-# Ensure mu-plugins loader exists\n\
-if [ ! -f /var/www/html/wp-content/mu-plugins/0-sqlite-database-integration-loader.php ]; then\n\
-    cp /usr/src/wordpress/wp-content/mu-plugins/0-sqlite-database-integration-loader.php /var/www/html/wp-content/mu-plugins/\n\
-fi\n\
-\n\
-exec "$@"\n\
-' > /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Use the startup script
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

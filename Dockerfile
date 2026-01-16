@@ -14,7 +14,8 @@ RUN apt-get install -y unzip \
     && unzip /tmp/sqlite-database-integration.zip -d /tmp/ \
     && mkdir -p /usr/src/wordpress/wp-content/mu-plugins \
     && cp -r /tmp/sqlite-database-integration/* /usr/src/wordpress/wp-content/mu-plugins/ \
-    && mv /usr/src/wordpress/wp-content/mu-plugins/deactivate.php /usr/src/wordpress/wp-content/mu-plugins/deactivate.php.disabled \
+    && cp /usr/src/wordpress/wp-content/mu-plugins/load.php /usr/src/wordpress/wp-content/mu-plugins/0-sqlite-database-integration-loader.php \
+    && rm /usr/src/wordpress/wp-content/mu-plugins/load.php \
     && cp /usr/src/wordpress/wp-content/mu-plugins/db.copy /usr/src/wordpress/wp-content/db.php \
     && chmod 644 /usr/src/wordpress/wp-content/db.php \
     && rm -rf /tmp/sqlite-database-integration /tmp/sqlite-database-integration.zip
